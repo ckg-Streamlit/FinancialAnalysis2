@@ -3,6 +3,7 @@ import streamlit as st
 import yfinance as yf
 import pandas_ta as ta
 import datetime as datetime
+import plotly.graph_objs as go
 
 client=OpenAI(api_key=st.secrets["OPEN_API_KEY"])
 content_system="You are a financial assistant that will retrieve two tables of financial market data and will summarize the comparative performance in text, in full detail with highlights for each stock and also a conclusion with a markdown output. BE VERY STRICT ON YOUR OUTPUT"
@@ -29,6 +30,23 @@ stock_data2["sma5"]=ta.sma(stock_data2["Close"], length=5)
 stock_data1["sma10"]=ta.sma(stock_data1["Close"], length=10)
 stock_data2["sma10"]=ta.sma(stock_data2["Close"], length=10)
 
+candlestick1 = go.Candlestick(x=stock_data1.index,
+                                 open=stock_data1["Open"],
+                                 high=stock_data1["High"],
+                                 low=stock_data1["Low"],
+                                 close=stock_data1["Close"])
+                            
+
+candlestick2 = go.Candlestick(x=stock_data2.index,
+                                 open=stock_data1["Open"],
+                                 high=stock_data1["High"],
+                                 low=stock_data1["Low"],
+                                 close=stock_data1["Close"])
+                            
+fig1=go.Figure()
+fig1.add_trace((candlestick1))
+fig2=go.Figure()
+fig2.add_trace((candlestick2))
 
 
 
@@ -37,6 +55,7 @@ col1, col2 =st.columns(2)
 with col1:
     st.subheader(f"Displaying data for: {selected_stock1}")
     st.write(stock_data1)
+    st.plotly_chart(fig1)
     chart_type1=st.sidebar.selectbox(f'Select Chart Type for {selected_stock1}', ['Line', 'Bar', "Tech"])
     if chart_type1=="Line":
         st.line_chart(stock_data1["Close"])
@@ -48,13 +67,14 @@ with col1:
 with col2:
     st.subheader(f"Displaying data for: {selected_stock2}")
     st.write(stock_data2)
+    st.plotly_chart(fig2)
     chart_type2=st.sidebar.selectbox(f'Select Chart Type for {selected_stock2}', ['Line', 'Bar',"Tech"])
     if chart_type2=="Line":
         st.line_chart(stock_data2["Close"])
-    elif chart_type1=="Bar":
+    elif chart_type2=="Bar":
         st.bar_chart(stock_data2["Close"])
     elif chart_type2=="Tech":
-        st.line_chart(stock_data1[["Close","sma5","sma10"]])
+        st.line_chart(stock_data2[["Close","sma5","sma10"]])
 
 if st.button('Comparative Performance'):
     response = client.chat.completions.create(
